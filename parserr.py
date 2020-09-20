@@ -46,15 +46,18 @@ def get_page(url):
             from main import logger
             logger.info('request status %s' % resp.status_code)
             return ''
-    except requests.ConnectionError as exception:
+    except:
         return ''
     return resp.text
 
 
 def parse_page(page_text):
-    soup = BeautifulSoup(page_text, 'html.parser')
-    # print(soup.prettify())
-    a_tags = soup.select('a.m-link-ticket')
+    if page_text:
+        soup = BeautifulSoup(page_text, 'html.parser')
+        # print(soup.prettify())
+        a_tags = soup.select('a.m-link-ticket')
+    else:
+        return []
     href = []
     for a in a_tags:
         href.append(a['href'])

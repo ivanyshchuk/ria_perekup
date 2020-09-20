@@ -73,7 +73,6 @@ def answer(update, context):
     if not href_list:
         update.message.reply_text('Відповідь відхилена. Не вдалося знайти автомобілі по цьому посиланню', reply_markup=markup)
     else:
-        # print(href_list)
         now = datetime.now()
         User.update(search_url=search_url, history=','.join(href_list), modified=now).where(User.chat_id == chat_id).execute()
         update.message.reply_text('Відповідь прийнята.', reply_markup=markup)
