@@ -36,15 +36,17 @@ urllib3.disable_warnings()
 
 
 def get_page(url):
-    urllib3.disable_warnings()
-    session = requests.Session()
-    headers['User-Agent'] = generate_user_agent()
-    session.headers = headers
-    resp = session.get(url, timeout=TIMEOUT, verify=False, stream=True)
-    print(url, resp.status_code)
-    if resp.status_code != 200:
-        from main import logger
-        logger.info('request status %s' % resp.status_code)
+    try:
+        session = requests.Session()
+        headers['User-Agent'] = generate_user_agent()
+        session.headers = headers
+        resp = session.get(url, timeout=TIMEOUT, verify=False, stream=True)
+        print(url, resp.status_code)
+        if resp.status_code != 200:
+            from main import logger
+            logger.info('request status %s' % resp.status_code)
+            return ''
+    except requests.ConnectionError as exception:
         return ''
     return resp.text
 
@@ -78,7 +80,7 @@ def parse_auto_ria(bot, users):
                         bot.send_message(user.chat_id, a)
                     user_history.extend(result_list)
                     # print('>> user new history>> ', user_history)
-                    User.update(history=','.join(user_history)).where(User.chat_id == user.chat_id).execute()
+                    User.update(history=','.join(user_history[:100])).where(User.chat_id == user.chat_id).execute()
         time.sleep(random.choice(SLEEP_DELAY_LIST))
 
 
