@@ -23,6 +23,17 @@ logging.basicConfig(filename='bot_log.log', format='%(asctime)s - %(name)s - %(l
 logger = logging.getLogger('telegram bot')
 
 
+def is_user_or_create_user(func):
+    def wraper(update, context):
+        chat_id = update.message.chat_id
+        user = User.get_or_none(User.chat_id == chat_id)
+        if not user:
+            return start(update, context)
+        else:
+            return func(update, context, user)
+    return wraper
+
+
 def start(update, context):
     chat_id = update.message.chat_id
     first_name = update.effective_chat.first_name or ''
@@ -38,34 +49,28 @@ def start(update, context):
     return CHOOSING
 
 
-def add_url(update, context):
-    chat_id = update.message.chat_id
-    user = User.get_or_none(User.chat_id == chat_id)
-    if user:
-        if user.search_url:
-            update.message.reply_text('Ваш список автомобілів буде замінений')
-        update.message.reply_text('Вставте посилання на новий список автомобілів. Який виб хотіли відслідковувати. Потрібно вставити посилання на автомобілі посортовані за най новішими.')
-    else:
-        start(update, context)
+@is_user_or_create_user
+def add_url(update, context, user):
+    if user.search_url:
+        update.message.reply_text('Ваш список автомобілів буде замінений')
+    update.message.reply_text('Вставте посилання на новий список автомобілів. Який виб хотіли відслідковувати. Потрібно вставити посилання на автомобілі посортовані за най новішими.')
     return TYPING_CHOICE
 
 
-def delete_url(update, context):
-    chat_id = update.message.chat_id
-    user = User.get_or_none(User.chat_id == chat_id)
-    if user:
-        if user.search_url:
-            now = datetime.now()
-            User.update(search_url=None, history=None, modified=now).where(User.chat_id == chat_id).execute()
-            update.message.reply_text('Розсилка зупинена', reply_markup=markup)
-        else:
-            update.message.reply_text('У вас немає розсилки', reply_markup=markup)
+@is_user_or_create_user
+def delete_url(update, context, user):
+    if user.search_url:
+        now = datetime.now()
+        User.update(search_url=None, history=None, modified=now).where(User.chat_id == chat_id).execute()
+        update.message.reply_text('Розсилка зупинена', reply_markup=markup)
     else:
-        start(update, context)
+        update.message.reply_text('У вас немає розсилки', reply_markup=markup)
+
     return CHOOSING
 
 
-def answer(update, context):
+@is_user_or_create_user
+def answer(update, context, user):
     chat_id = update.message.chat_id
     search_url = str(update.message.text).replace(' ', '')
     page = get_page(add_url_params(search_url, {'size': 30}))
