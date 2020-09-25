@@ -61,6 +61,7 @@ def add_url(update, context, user):
 def delete_url(update, context, user):
     if user.search_url:
         now = datetime.now()
+        chat_id = update.message.chat_id
         User.update(search_url=None, history=None, modified=now).where(User.chat_id == chat_id).execute()
         update.message.reply_text('Розсилка зупинена', reply_markup=markup)
     else:
